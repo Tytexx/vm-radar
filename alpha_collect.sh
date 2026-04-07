@@ -27,3 +27,9 @@ MEM_P= ($MEM_USED/$MEM_TOTAL)*100
 DISK_PCT=$(df -h / | awk 'NR==2 {gsub(/%/,"",$5); print $5}')
 #get the loadavg from /proc/load/avg
 LOAD_AVG=$(awk '{print $1}' /proc/loadavg)
+#get cpu idle % using top
+# -bn1 or batch mode used to make it non interactive
+CPU_PCT=$(top -bn1 | grep "Cpu(s)" | awk '{print 100 - $8}')
+#get the top 5 processes using cpu using ps aux
+#we use basename to strip the path and xargs -I{} to inforce basename
+TOP_PCS=$(ps aux --sort=-%cpu | awk 'NR!=1 {print $11}' | head -5 | xargs -I{} basename {})
