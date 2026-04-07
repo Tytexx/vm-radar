@@ -22,4 +22,8 @@ MEM_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
 MEM_AVAIL=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
 MEM_USED= $MEM_TOTAL - $MEM_AVAIL
 MEM_P= ($MEM_USED/$MEM_TOTAL)*100
-
+#get the disc metric using df
+#gsub used to get rid of % sign at the end
+DISK_PCT=$(df -h / | awk 'NR==2 {gsub(/%/,"",$5); print $5}')
+#get the loadavg from /proc/load/avg
+LOAD_AVG=$(awk '{print $1}' /proc/loadavg)
