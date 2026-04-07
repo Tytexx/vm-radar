@@ -20,8 +20,8 @@ fi
 #get the memory metrics from files stored in /proc/meminfo
 MEM_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
 MEM_AVAIL=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
-MEM_USED= $MEM_TOTAL - $MEM_AVAIL
-MEM_P= ($MEM_USED/$MEM_TOTAL)*100
+MEM_USED= $((MEM_TOTAL - MEM_AVAIL))
+MEM_PCT=$(awk "BEGIN {printf \"%.1f\", ($MEM_USED / $MEM_TOTAL) * 100}")
 #get the disc metric using df
 #gsub used to get rid of % sign at the end
 DISK_PCT=$(df -h / | awk 'NR==2 {gsub(/%/,"",$5); print $5}')
