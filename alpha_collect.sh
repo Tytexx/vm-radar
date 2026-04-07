@@ -16,3 +16,10 @@ mkdir -p "$HOME/exchange/outbox"
 if [[ ! -f "$DATA_DIR/metrics.json" ]]; then
     echo '[]' > "$DATA_DIR/metrics.json"
 fi
+
+#get the memory metrics from files stored in /proc/meminfo
+MEM_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+MEM_AVAIL=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+MEM_USED= $MEM_TOTAL - $MEM_AVAIL
+MEM_P= ($MEM_USED/$MEM_TOTAL)*100
+
