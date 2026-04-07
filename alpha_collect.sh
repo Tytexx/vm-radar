@@ -20,7 +20,7 @@ fi
 #get the memory metrics from files stored in /proc/meminfo
 MEM_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
 MEM_AVAIL=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
-MEM_USED= $((MEM_TOTAL - MEM_AVAIL))
+MEM_USED=$((MEM_TOTAL - MEM_AVAIL))
 MEM_PCT=$(awk "BEGIN {printf \"%.1f\", ($MEM_USED / $MEM_TOTAL) * 100}")
 #get the disc metric using df
 #gsub used to get rid of % sign at the end
@@ -32,4 +32,4 @@ LOAD_AVG=$(awk '{print $1}' /proc/loadavg)
 CPU_PCT=$(top -bn1 | grep "Cpu(s)" | awk '{print 100 - $8}')
 #get the top 5 processes using cpu using ps aux
 #we use basename to strip the path and xargs -I{} to inforce basename
-TOP_PCS=$(ps aux --sort=-%cpu | awk 'NR!=1 {print $11}' | head -5 | xargs -I{} basename {})
+TOP_PROCS=$(ps aux --sort=-%cpu | awk 'NR!=1 {print $11}' | head -5 | xargs -I{} basename {})
