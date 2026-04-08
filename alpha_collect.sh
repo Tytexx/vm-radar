@@ -33,3 +33,10 @@ CPU_PCT=$(top -bn1 | grep "Cpu(s)" | awk '{print 100 - $8}')
 #get the top 5 processes using cpu using ps aux
 #we use basename to strip the path and xargs -I{} to inforce basename and jq to turn it into an array
 TOP_PROCS=$(ps aux --sort=-%cpu | awk 'NR!=1 {print $11}' | head -5 | xargs -I{} basename {} | jq -R . | jq -sc .)
+
+HOSTNAME=$(hostname)
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+#id using count implemented using length function of jq
+CURRENT_COUNT=$(jq 'length' "$DATA_DIR/metrics.json")
+SNAP_ID=$((CURRENT_COUNT + 1))
+
