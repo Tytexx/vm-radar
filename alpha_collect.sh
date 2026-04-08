@@ -40,3 +40,25 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 CURRENT_COUNT=$(jq 'length' "$DATA_DIR/metrics.json")
 SNAP_ID=$((CURRENT_COUNT + 1))
 
+#create the object to store in the json
+SNAPSHOT=$(jq -n \
+  --argjson id "$SNAP_ID" \
+  --arg timestamp "$TIMESTAMP" \
+  --arg hostname "$HOSTNAME" \
+  --argjson cpu_pct "$CPU_PCT" \
+  --argjson mem_pct "$MEM_PCT" \
+  --argjson disk_pct "$DISK_PCT" \
+  --arg load_avg "$LOAD_AVG" \
+  --argjson top_procs "$TOP_PROCS" \
+  '{
+      id:        $id,
+      timestamp: $timestamp,
+      hostname:  $hostname,
+      cpu_pct:   $cpu_pct,
+      mem_pct:   $mem_pct,
+      disk_pct:  $disk_pct,
+      load_avg:  $load_avg,
+      top_procs: $top_procs
+  }')
+  
+#
