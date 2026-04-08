@@ -61,4 +61,18 @@ SNAPSHOT=$(jq -n \
       top_procs: $top_procs
   }')
   
-#
+# Writing to `~/data/metrics.json`
+#write to a temporary json since we cant read and write to the same file at the same time
+TMP=$(mktemp)
+#append the snapshot object to the file '.' from METRICS_FILE and store it in temp
+jq --argjson snap "$SNAPSHOT" '. + [$snap]' "$METRICS_FILE" > "$TMP"
+#replace the METRICS_FILE with our temp which has the appended snapshot
+mv "$TMP" "$METRICS_FILE"
+
+# Writing to `~/exchange/outbox/...`
+TIMESTAMP_FILE=$(date -u +"%Y%m%d_%H%M%S")
+OUTBOX="$HOME/exchange/outbox"
+echo "$SNAPSHOT" > "$OUTBOX/snapshot_${TIMESTAMP_FILE}.json"
+
+#printing confirmation
+echo "COLLECTED snapshot_${TIMESTAMP_FILE}.json (cpu=${CPU_PCT}%, mem=${MEM_PCT}%, disk=${DISK_PCT}%)"
