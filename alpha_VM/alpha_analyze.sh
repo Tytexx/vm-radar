@@ -30,18 +30,27 @@ for HOST in $HOSTNAMES; do
 done
 
 #use awk to calculate if metrics are under threshold
-if awk "BEGIN {exit !($CPU >= $CPU_CRIT)}"; then
-    SEVERITY="CRITICAL"
-elif awk "BEGIN {exit !($CPU >= $CPU_WARN)}"; then
-    SEVERITY="WARNING"
-fi
-if awk "BEGIN {exit !($MEM >= $MEM_CRIT)}"; then
-    SEVERITY="CRITICAL"
-elif awk "BEGIN {exit !($MEM  >= $MEM_WARN)}"; then
-    SEVERITY="WARNING"
-fi
-if awk "BEGIN {exit !($DISK >= $DISK_CRIT)}"; then
-    SEVERITY="CRITICAL"
-elif awk "BEGIN {exit !($DISK  >= $DISK_WARN)}"; then
-    SEVERITY="WARNING"
-fi
+check_metric() {
+    local METRIC_NAME=$1
+    local VALUE=$2
+    local WARN=$3
+    local CRIT=$4
+    local TIMESTAMP=$5
+    local HOST=$6
+
+    if awk "BEGIN {exit !($VALUE >= $CRIT)}"; then
+        SEVERITY="CRITICAL"
+    elif awk "BEGIN {exit !($VALUE >= $WARN)}"; then
+        SEVERITY="WARNING"
+    else
+        return 0
+    fi
+
+    # write alert and publish to redis
+}
+
+check_metric "cpu_pct"  "$CPU"  "$CPU_WARN"  "$CPU_CRIT"  "$TS" "$HOST"
+check_metric "mem_pct"  "$MEM"  "$MEM_WARN"  "$MEM_CRIT"  "$TS" "$HOST"
+check_metric "disk_pct" "$DISK" "$DISK_WARN" "$DISK_CRIT" "$TS" "$HOST"
+
+
