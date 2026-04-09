@@ -29,3 +29,19 @@ for HOST in $HOSTNAMES; do
     TS=$(echo   "$SNAP" | jq -r '.timestamp')
 done
 
+#use awk to calculate if metrics are under threshold
+if awk "BEGIN {exit !($CPU >= $CPU_CRIT)}"; then
+    SEVERITY="CRITICAL"
+elif awk "BEGIN {exit !($CPU >= $CPU_WARN)}"; then
+    SEVERITY="WARNING"
+fi
+if awk "BEGIN {exit !($MEM >= $MEM_CRIT)}"; then
+    SEVERITY="CRITICAL"
+elif awk "BEGIN {exit !($MEM  >= $MEM_WARN)}"; then
+    SEVERITY="WARNING"
+fi
+if awk "BEGIN {exit !($DISK >= $DISK_CRIT)}"; then
+    SEVERITY="CRITICAL"
+elif awk "BEGIN {exit !($DISK  >= $DISK_WARN)}"; then
+    SEVERITY="WARNING"
+fi
