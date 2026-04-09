@@ -17,3 +17,15 @@ MEM_CRIT=$(jq -r '.mem_crit' "$THRESHOLDS")
 DISK_WARN=$(jq -r '.disk_warn' "$THRESHOLDS")
 DISK_CRIT=$(jq -r '.disk_crit' "$THRESHOLDS")
 
+#take a list of hostnames
+HOSTNAMES=$(jq -r '[.[].hostname] | unique | .[]' "$METRICS_FILE")
+#for each host get each metric of the latest snapshot
+for HOST in $HOSTNAMES; do
+    SNAP=$(jq --arg h "$HOST" '[.[] | select(.hostname == $h)] | last' "$METRICS_FILE")
+    
+    CPU=$(echo  "$SNAP" | jq -r '.cpu_pct')
+    MEM=$(echo  "$SNAP" | jq -r '.mem_pct')
+    DISK=$(echo "$SNAP" | jq -r '.disk_pct')
+    TS=$(echo   "$SNAP" | jq -r '.timestamp')
+done
+
