@@ -17,17 +17,7 @@ MEM_CRIT=$(jq -r '.mem_crit' "$THRESHOLDS")
 DISK_WARN=$(jq -r '.disk_warn' "$THRESHOLDS")
 DISK_CRIT=$(jq -r '.disk_crit' "$THRESHOLDS")
 
-#take a list of hostnames
-HOSTNAMES=$(jq -r '[.[].hostname] | unique | .[]' "$METRICS_FILE")
-#for each host get each metric of the latest snapshot
-for HOST in $HOSTNAMES; do
-    SNAP=$(jq --arg h "$HOST" '[.[] | select(.hostname == $h)] | last' "$METRICS_FILE")
-    
-    CPU=$(echo  "$SNAP" | jq -r '.cpu_pct')
-    MEM=$(echo  "$SNAP" | jq -r '.mem_pct')
-    DISK=$(echo "$SNAP" | jq -r '.disk_pct')
-    TS=$(echo   "$SNAP" | jq -r '.timestamp')
-done
+METRICS_FILE="$DATA_DIR/metrics.json"
 
 #use awk to calculate if metrics are under threshold
 check_metric() {
@@ -46,11 +36,24 @@ check_metric() {
         return 0
     fi
 
-    # write alert and publish to redis
+    #TODO write alert and publish to redis
 }
+while true; do
+  #take a list of hostnames
+  HOSTNAMES=$(jq -r '[.[].hostname] | unique | .[]' "$METRICS_FILE")
+  #for each host get each metric of the latest snapshot
+  for HOST in $HOSTNAMES; do
+      SNAP=$(jq --arg h "$HOST" '[.[] | select(.hostname == $h)] | last' "$METRICS_FILE")
+      
+      CPU=$(echo  "$SNAP" | jq -r '.cpu_pct')
+      MEM=$(echo  "$SNAP" | jq -r '.mem_pct')
+      DISK=$(echo "$SNAP" | jq -r '.disk_pct')
+      TS=$(echo   "$SNAP" | jq -r '.timestamp')
 
-check_metric "cpu_pct"  "$CPU"  "$CPU_WARN"  "$CPU_CRIT"  "$TS" "$HOST"
-check_metric "mem_pct"  "$MEM"  "$MEM_WARN"  "$MEM_CRIT"  "$TS" "$HOST"
-check_metric "disk_pct" "$DISK" "$DISK_WARN" "$DISK_CRIT" "$TS" "$HOST"
-
+      check_metric "cpu_pct"  "$CPU"  "$CPU_WARN"  "$CPU_CRIT"  "$TS" "$HOST"
+      check_metric "mem_pct"  "$MEM"  "$MEM_WARN"  "$MEM_CRIT"  "$TS" "$HOST"
+      check_metric "disk_pct" "$DISK" "$DISK_WARN" "$DISK_CRIT" "$TS" "$HOST"
+  done
+  sleep "$INTERVAL"
+done
 
