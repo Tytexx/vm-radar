@@ -47,9 +47,9 @@ EOF
     echo "GPG key generated for $GPG_EMAIL." 
 fi
 #exchange keys w alpha
-gpg --armor --export "$GPG_EMAIL" > ~/beta_keys.gpg #armor for readable text - gpg exports it into beta_keys file (output file)
-echo "Public key has been sent to ~/beta_keys.gpg"
-#need to manually put ~/beta_keys.gpg into alpha then run  gpg --import ~/beta_keys.gpg
+gpg --armor --export "$GPG_EMAIL" > ~/beta_pubkey.gpg #armor for readable text - gpg exports it into beta_pubkey file (output file)
+echo "Public key has been sent to ~/beta_pubkey.gpg"
+#need to manually put ~/beta_pubkey.gpg into alpha then run  gpg --import ~/beta_pubkey.gpg
 
 echo "Creating config/settings.json..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" #BASHSOURCE for current path then dirname to remove file name
@@ -76,11 +76,11 @@ echo "successfully made config/settings.json"
 echo "Creating config/thresholds.json"
 cat > "$SCRIPT_DIR/config/thresholds.json" <<EOF
 {
-  "cpu_warning": 70,
+  "cpu_warn": 70,
   "cpu_crit": 90,
-  "memory_warning": 75,
-  "memory_crit": 90,
-  "disk_warning": 80,
+  "mem_warn": 75,
+  "mem_crit": 90,
+  "disk_warn": 80,
   "disk_crit": 95
 }
 EOF
@@ -118,3 +118,13 @@ sudo systemctl daemon-reload  #reload service files since systemd is new
 # Enable the service so it starts automatically on boot
 sudo systemctl enable vm-monitor #enable  service so it starts automatically
 echo "vm-monitor auto service enabled"
+
+#testing connection via ping pong
+ALPHA_HOST=$(jq -r '.redis_host' "$SCRIPT_DIR/config/settings.json")
+REDIS_PORT=$(jq -r '.redis_port' "$SCRIPT_DIR/config/settings.json")
+PING_RESULT=$(redis-cli -h "$ALPHA_HOST" -p "$REDIS_PORT" ping 2>/dev/null || echo "FAIL")
+if [ "$PING_RESULT" = "PONG" ]; then
+    echo "Redis on $ALPHA_HOST:$REDIS_PORT is reachable. (PONG)"
+else
+    echo "Cannot reach Redis at $ALPHA_HOST:$REDIS_PORT"
+fi
