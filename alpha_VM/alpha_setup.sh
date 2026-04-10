@@ -1,10 +1,10 @@
 #!/bin/bash
-echo "VM is being set up..."
+echo "VM is being set up"
 
-echo "Installing packages..."
+echo "Installing packages"
 sudo apt-get update -qq
 sudo apt-get install -y redis-tools jq gnupg openssh-client #jq is editor for JSON files. redis-tools. Beta doesnt need all redis stuff so just connects to Alpha for the one thing it needs
-#gnupg for encryption. This is alpha so needs the openssh-client bit since beta takes info from here
+#gnupg for encryption. This is alpha so needs the openssh-client bit since beta takes info from here/alpha initiate
 echo "Packages have been installed."
 
 echo "Creating directory layout..."
@@ -24,9 +24,28 @@ else
     echo "metrics.json already exists, skipping." 
 fi
 
-echo "Setting up GPG key pair..."
-GPG_NAME="beta-vm-monitor"
-GPG_EMAIL="beta@vm-monitor.local"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" #for the folder path
+PEER_HOST="beta-vm" #the peer is beta this is alpha (from the project file in the example
+PEER_USER="qustudent"
+BETA_GPG_EMAIL="beta@vm-monitor.local"
+GPG_EMAIL="alpha@vm-monitor.local"
+GPG_NAME="alpha-vm-monitor"
+#SSH key autnetication ->
+if [ ! -f ~/.ssh/id_rsa ]; then #if id_rsa file doesnt exit then make the key pair->
+    ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N"" #""for no password
+    #rsa is an encryption algorithm that uses keys to swap data so 
+    #here the keys are being swapped safely between alpha and beta
+    #uses 2048 bit key size (standard?) this is all so we dont need like a password or anything 
+    echo "SSH keypair generated in ~/.ssh/id_rsa"
+else
+    echo "SSH keypair already exists, skipping key generation." #no overwriting
+fi
+echo "Copying SSH public key to $PEER_USER@$PEER_HOST..."
+echo "(You will be prompted for $PEER_HOST password once — never again after this.)"
+ssh-copy-id -i ~/.ssh/id_rsa.pub "$PEER_USER@$PEER_HOST" 
+#take the public key and install it then use -i publick key file and put it into user@host
+
+#to make gpg key pair 
 if gpg --list-keys "$GPG_EMAIL" &>/dev/null; then # means &> its run silently and only checks if it exists
     echo "GPG key already exists for $GPG_EMAIL, skipping generation."
 else 
@@ -46,25 +65,24 @@ EOF
     rm -f /tmp/gpg_batch.txt #remove temp file since keys been created
     echo "GPG key generated for $GPG_EMAIL." 
 fi
-#exchange keys w alpha
-gpg --armor --export "$GPG_EMAIL" > ~/beta_keys.gpg #armor for readable text - gpg exports it into beta_keys file (output file)
-echo "Public key has been sent to ~/beta_keys.gpg"
-#need to manually put ~/beta_keys.gpg into alpha then run  gpg --import ~/beta_keys.gpg
+#export alpha key to file so beta can get it
+gpg --armor --export "$GPG_EMAIL" > ~/alpha_keys.gpg #armor for readable text - gpg exports it into beta_keys file (output file)
+echo "Public key has been sent to ~/alpha_keys.gpg"
+scp -i ~/.ssh/id_rsa ~/alpha_keys.gpg "$PEER_USER@$PEER_HOST:~/alpha_keys.gpg" #send alphakeys.gpg ket to peerhost
+scp -i ~/.ssh/id_rsa "$PEER_USER@$PEER_HOST:~/beta_keys.gpg" ~/beta_keys.gpg #get betagpg from host as well
+
 
 echo "Creating config/settings.json..."
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" #BASHSOURCE for current path then dirname to remove file name
-#scriptdir is basically the current VM directory
-#/.. to go to parent (=1 directory backwards) then pwd to get the full path of where we now are(via using cd)
 mkdir -p "$SCRIPT_DIR/config" #make directory named where we are no after all above
 cat > "$SCRIPT_DIR/config/settings.json" <<EOF
 {
-  "peer_hostname": "alpha-vm",
+  "peer_hostname": "beta-vm",
   "peer_user": "qustudent",
-  "ssh_key": "~/.ssh/id_rsa",
+  "ssh_key": "$HOME/.ssh/id_rsa",
   "collect_interval_sec": 60,
   "exchange_interval_sec": 300,
-  "data_dir": "~/data",
-  "log_dir": "~/logs",
+  "data_dir": "$HOME/data",
+  "log_dir": "$HOME/logs",
   "redis_host": "alpha-vm",
   "redis_port": 6379,
   "backup_passphrase_env": "VM_BACKUP_KEY"
@@ -92,3 +110,8 @@ echo "Setting permissions for all shell scripts"
 find "$SCRIPT_DIR" -name "*.sh" -exec chmod +x {} \; #searches everything in SCRIPT_DR for everything ending with .sh
 #so it looks for all shell files than adds the execute permission 
 echo "All shell files are now executable."
+
+echo "Configuring Redis server to start automatically on boot"
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+sleep 2 #just for time to reset and all
