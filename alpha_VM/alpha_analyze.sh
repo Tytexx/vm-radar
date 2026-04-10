@@ -6,6 +6,7 @@ THRESHOLDS="config/thresholds.json"
 
 INTERVAL=$(jq -r '.collect_interval_sec' "$CONFIG")
 REDIS_HOST=$(jq -r '.redis_host' "$CONFIG")
+REDIS_PORT=$(jq -r '.redis_port' "$CONFIG")
 DATA_DIR=$(jq -r '.data_dir' "$CONFIG" | sed "s|~|$HOME|g")
 LOG_DIR=$(jq -r '.log_dir' "$CONFIG" | sed "s|~|$HOME|g")
 
@@ -66,7 +67,10 @@ check_metric() {
     echo "$ALERT" >> "$ALERTS_LOG"
 
     #TODO publish to redis
-
+    #publish to redis and > /dev/null for clean stdoout
+    redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" PUBLISH "vm-alerts" "$ALERT" > /dev/null
+    #stdout
+    echo "ALERT $SEVERITY $HOST ${METRIC_NAME}=${VALUE} (threshold=${THRESHOLD})"
     }
 
 ALERT_SEQ=0
