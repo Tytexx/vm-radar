@@ -70,7 +70,7 @@ gpg --armor --export "$GPG_EMAIL" > ~/alpha_pubkey.gpg #armor for readable text 
 echo "Public key has been sent to ~/alpha_pubkey.gpg"
 scp -i ~/.ssh/id_rsa ~/alpha_pubkey.gpg "$PEER_USER@$PEER_HOST:~/alpha_pubkey.gpg" #send alphapubkey.gpg ket to peerhost
 scp -i ~/.ssh/id_rsa "$PEER_USER@$PEER_HOST:~/beta_pubkey.gpg" ~/beta_pubkey.gpg #get betagpg from host as well
-
+gpg --import ~/beta_pubkey.gpg
 
 echo "Creating config/settings.json..."
 mkdir -p "$SCRIPT_DIR/config" #make directory named where we are no after all above
