@@ -3,7 +3,7 @@ echo "VM is being set up"
 
 echo "Installing packages"
 sudo apt-get update -qq
-sudo apt-get install -y redis-tools jq gnupg openssh-client #jq is editor for JSON files. redis-tools. Beta doesnt need all redis stuff so just connects to Alpha for the one thing it needs
+sudo apt-get install -y redis-server jq gnupg openssh-client #jq is to read/translate JSON files. redis-tools. Beta doesnt need all redis stuff so just connects to Alpha for the one thing it needs
 #gnupg for encryption. This is alpha so needs the openssh-client bit since beta takes info from here/alpha initiate
 echo "Packages have been installed."
 
@@ -32,7 +32,7 @@ GPG_EMAIL="alpha@vm-monitor.local"
 GPG_NAME="alpha-vm-monitor"
 #SSH key autnetication ->
 if [ ! -f ~/.ssh/id_rsa ]; then #if id_rsa file doesnt exit then make the key pair->
-    ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N"" #""for no password
+    ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N "" #""for no password
     #rsa is an encryption algorithm that uses keys to swap data so 
     #here the keys are being swapped safely between alpha and beta
     #uses 2048 bit key size (standard?) this is all so we dont need like a password or anything 
@@ -66,10 +66,10 @@ EOF
     echo "GPG key generated for $GPG_EMAIL." 
 fi
 #export alpha key to file so beta can get it
-gpg --armor --export "$GPG_EMAIL" > ~/alpha_keys.gpg #armor for readable text - gpg exports it into beta_keys file (output file)
-echo "Public key has been sent to ~/alpha_keys.gpg"
-scp -i ~/.ssh/id_rsa ~/alpha_keys.gpg "$PEER_USER@$PEER_HOST:~/alpha_keys.gpg" #send alphakeys.gpg ket to peerhost
-scp -i ~/.ssh/id_rsa "$PEER_USER@$PEER_HOST:~/beta_keys.gpg" ~/beta_keys.gpg #get betagpg from host as well
+gpg --armor --export "$GPG_EMAIL" > ~/alpha_pubkey.gpg #armor for readable text - gpg exports it into beta_pubkey file (output file)
+echo "Public key has been sent to ~/alpha_pubkey.gpg"
+scp -i ~/.ssh/id_rsa ~/alpha_pubkey.gpg "$PEER_USER@$PEER_HOST:~/alpha_pubkey.gpg" #send alphapubkey.gpg ket to peerhost
+scp -i ~/.ssh/id_rsa "$PEER_USER@$PEER_HOST:~/beta_pubkey.gpg" ~/beta_pubkey.gpg #get betagpg from host as well
 
 
 echo "Creating config/settings.json..."
@@ -94,11 +94,11 @@ echo "successfully made config/settings.json"
 echo "Creating config/thresholds.json"
 cat > "$SCRIPT_DIR/config/thresholds.json" <<EOF
 {
-  "cpu_warning": 70,
+  "cpu_warn": 70,
   "cpu_crit": 90,
-  "memory_warning": 75,
-  "memory_crit": 90,
-  "disk_warning": 80,
+  "mem_warn": 75,
+  "mem_crit": 90,
+  "disk_warn": 80,
   "disk_crit": 95
 }
 EOF
@@ -115,3 +115,10 @@ echo "Configuring Redis server to start automatically on boot"
 sudo systemctl enable redis-server
 sudo systemctl start redis-server
 sleep 2 #just for time to reset and all
+
+PING_RESULT=$(redis-cli ping 2>/dev/null || echo "FAIL")
+if [ "$PING_RESULT" = "PONG" ]; then
+    echo "Redis is running well"
+else
+    echo "Redis did not respond to ping"
+fi
