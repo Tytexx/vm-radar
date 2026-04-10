@@ -43,7 +43,8 @@ fi
 
 echo "Encrypting archive with GPG"
 if [ -f "$TEMP_ARCHIVE" ]; then #only tries encryption if there even is a file
-    echo "$PASSPHRASE" | gpg \ #gpg takes password using stdin
+    echo "$PASSPHRASE" | gpg \ 
+    #gpg takes password using stdin
         --symmetric \ #pass based encryp
         --batch \ #no inputs needed
         --passphrase-fd 0 \ #read the passphrase from stdin
