@@ -1,7 +1,5 @@
 #!/bin/bash
 #Create encrypted backups of monitoring data, rotate old logs, and clean up stale files
-mkdir -p "$BACKUP_DIR" #make directories -p = if we need it
-mkdir -p "$BACKUP_LOG_DIR"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/config/settings.json"
 DATA_DIR=$(jq -r '.data_dir' "$CONFIG_FILE" | sed "s|~|$HOME|g") #read data.dir from configfile then output it to home.sed=replace~ w HOME
@@ -10,6 +8,8 @@ PASSPHRASE_ENV=$(jq -r '.backup_passphrase_env' "$CONFIG_FILE") #jq is for parsi
 #equal to whatever is equal to .backup_passphrase_env. CONFIGFILE is path/where
 BACKUP_DIR="$HOME/backup"
 BACKUP_LOG_DIR="$HOME/backup/logs"
+mkdir -p "$BACKUP_DIR" #make directories -p = if we need it
+mkdir -p "$BACKUP_LOG_DIR"
 INBOX_DIR="$HOME/exchange/inbox"
 OUTBOX_DIR="$HOME/exchange/outbox"
 PASSPHRASE="${!PASSPHRASE_ENV}"  #passphrase is now = whatever is inside of passphrase_env
