@@ -2,7 +2,7 @@
 
 
 # jq reads JSON files - Please change the variables to actual names when executing
-SETTINGS="$(dirname "$0")/config/settings.json"
+SETTINGS="$(dirname "$0")/config/settings.json" #Load config files
 
 PEER_HOST=$(jq -r '.peer_hostname' "$SETTINGS")   #beta-vm
 PEER_USER=$(jq -r '.peer_user' "$SETTINGS")        #qustudent
@@ -16,13 +16,18 @@ INBOX="$(dirname "$0")/exchange/inbox"
 SSH_KEY="${SSH_KEY/#\~/$HOME}"
 DATA_FILE="${DATA_FILE/#\~/$HOME}"
 
+# gpg identities
 PEER_EMAIL="beta@vm.local" 
 MY_EMAIL="alpha@vm.local"  
 
+#Counters - used for log summary
 SENT_COUNT=0
 VALID_COUNT=0
 REJECTED_COUNT=0
 
+# SENDING MECHANISM
+
+#Scan outbox
 for JSON_FILE in "$OUTBOX"/*.json; do
 
     [ -f "$JSON_FILE" ] || continue
@@ -33,6 +38,7 @@ for JSON_FILE in "$OUTBOX"/*.json; do
 
     echo "Encrypting $FILENAME..."
 
+# Encryption of the file using peer's public key
     gpg --recipient "$PEER_EMAIL" \
         --trust-model always \
         --encrypt \
@@ -44,6 +50,7 @@ for JSON_FILE in "$OUTBOX"/*.json; do
         continue
     fi
 
+# Encryption of the file using peer's public key
     scp -i "$SSH_KEY" \
         -o StrictHostKeyChecking=no \
         "$GPG_FILE" \
@@ -63,6 +70,7 @@ for JSON_FILE in "$OUTBOX"/*.json; do
     echo "Sent $FILENAME to $PEER_HOST"
 done
 
+# RECIEVING MECHANISM
 for GPG_FILE in "$INBOX"/*.json.gpg; do
 
     [ -f "$GPG_FILE" ] || continue
@@ -72,6 +80,7 @@ for GPG_FILE in "$INBOX"/*.json.gpg; do
 
     echo "Decrypting $FILENAME..."
 
+#Decrypt using Alpha's private key
     gpg --decrypt \
         --output "$DECRYPTED_FILE" \
         "$GPG_FILE" 2>/dev/null   
@@ -85,6 +94,8 @@ for GPG_FILE in "$INBOX"/*.json.gpg; do
         REJECTED_COUNT=$((REJECTED_COUNT + 1))
         continue
     fi
+
+#Check if decrypted file is JSON format 
     if ! jq empty "$DECRYPTED_FILE" 2>/dev/null; then
         echo "ERROR: Decrypted file is not valid JSON: $FILENAME"
         mv "$GPG_FILE" "$LOG_REJECTED/$FILENAME"
@@ -103,6 +114,7 @@ for GPG_FILE in "$INBOX"/*.json.gpg; do
     echo "Received and stored snapshot from peer"
 done
 
+# Update logs
 echo "SENT $SENT_COUNT files to $PEER_HOST | RECEIVED $((VALID_COUNT + REJECTED_COUNT)) files (valid=$VALID_COUNT rejected=$REJECTED_COUNT)"
 
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) SENT=$SENT_COUNT RECEIVED=$VALID_COUNT REJECTED=$REJECTED_COUNT" >> "$(dirname "$0")/logs/exchange.log"
