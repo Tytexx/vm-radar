@@ -1,5 +1,7 @@
 #!/bin/bash
 #Create encrypted backups of monitoring data, rotate old logs, and clean up stale files
+mkdir -p "$BACKUP_DIR" #make directories -p = if we need it
+mkdir -p "$BACKUP_LOG_DIR"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/config/settings.json"
 DATA_DIR=$(jq -r '.data_dir' "$CONFIG_FILE" | sed "s|~|$HOME|g") #read data.dir from configfile then output it to home.sed=replace~ w HOME
