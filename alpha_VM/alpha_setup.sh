@@ -3,8 +3,8 @@ echo "VM is being set up..."
 
 echo "Installing packages..."
 sudo apt-get update -qq
-sudo apt-get install -y redis-tools jq gnupg #jq is editor for JSON files. redis-tools. Beta doesnt need all redis stuff so just connects to Alpha for the one thing it needs
-#gnupg for encryption
+sudo apt-get install -y redis-tools jq gnupg openssh-client #jq is editor for JSON files. redis-tools. Beta doesnt need all redis stuff so just connects to Alpha for the one thing it needs
+#gnupg for encryption. This is alpha so needs the openssh-client bit since beta takes info from here
 echo "Packages have been installed."
 
 echo "Creating directory layout..."
@@ -92,29 +92,3 @@ echo "Setting permissions for all shell scripts"
 find "$SCRIPT_DIR" -name "*.sh" -exec chmod +x {} \; #searches everything in SCRIPT_DR for everything ending with .sh
 #so it looks for all shell files than adds the execute permission 
 echo "All shell files are now executable."
-#up to now is whats mostly non-specific to the VMs
-echo "Creating systemd service unit file"
-HOME_DIR=$(eval echo ~) #to get the home directory path: eval ~ so that ~ is full path to properly unify
-# Determine the absolute path to beta_collect.sh from this script's location
-BETA_DIR="$SCRIPT_DIR"
-#next line is to make the systemd service file then writes everything in between the EOF into it. dev/null to hide output
-#needed so everything constantly run rather than a one and done service type thing
-sudo tee /etc/systemd/system/vm-monitor.service > /dev/null <<EOF
-[Unit]
-Description=VM Monitoring Service
-After=network.target
-[Service]
-ExecStart=/home/qustudent/beta_VM/beta_service.sh
-Restart=on-failure
-[Install]
-WantedBy=multi-user.target
-EOF
-#[] are keywords to be recognized by systemd
-#unit bit  Descrip is what it is and after means dont start until network is actually ready to accept everything
-#Service execstart starts the whole beta service.sh and restart if theres any errors
-#install basically just says run now so everything is continuous
-echo "Systemd unit file created at /etc/systemd/system/vm-monitor.service"
-sudo systemctl daemon-reload  #reload service files since systemd is new
-# Enable the service so it starts automatically on boot
-sudo systemctl enable vm-monitor #enable  service so it starts automatically
-echo "vm-monitor auto service enabled"
