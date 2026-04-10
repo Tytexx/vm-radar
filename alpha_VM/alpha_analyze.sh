@@ -30,14 +30,49 @@ check_metric() {
 
     if awk "BEGIN {exit !($VALUE >= $CRIT)}"; then
         SEVERITY="CRITICAL"
+        THRESHOLD=$CRIT
     elif awk "BEGIN {exit !($VALUE >= $WARN)}"; then
         SEVERITY="WARNING"
+        THRESHOLD=$WARN
     else
         return 0
     fi
 
-    #TODO write alert and publish to redis
-}
+    #create the alert json with jq
+    #create the ALERT_ID
+    ALERT_SEQ=$((ALERT_SEQ + 1))
+    ALERT_ID="ALT_$(date -u +"%Y%m%d_%H%M%S")_$(printf '%04d' $ALERT_SEQ)"
+    #create ALERT OBJECT
+    ALERT=$(jq -n \
+      --arg alert_id "$ALERT_ID" \
+      --arg hostname "$HOSTNAME" \
+      --arg metric "$METRIC_NAME" \
+      --argjson value "$VALUE" \
+      --argjson threshold "$THRESHOLD" \
+      --arg severity "$SEVERITY" \
+      --arg timestamp "$TIMESTAMP" \
+      '{
+          alert_id: $alert_id,
+          hostname: $hostname,
+          metric: $metric,
+          value: $value,
+          threshold: $threshold,
+          severity: $severity,
+          timestamp: $timestamp,
+      }')
+    
+    #add to logs
+    ALERTS_LOG="$LOG_DIR/alerts.log"
+    echo "$ALERT" >> "$ALERTS_LOG"
+
+    #TODO publish to redis
+
+    }
+
+ALERT_SEQ=0
+ALERTS_LOG="$LOG_DIR/alerts.log"
+mkdir -p "$LOG_DIR"
+
 while true; do
   #take a list of hostnames
   HOSTNAMES=$(jq -r '[.[].hostname] | unique | .[]' "$METRICS_FILE")
@@ -49,7 +84,7 @@ while true; do
       MEM=$(echo  "$SNAP" | jq -r '.mem_pct')
       DISK=$(echo "$SNAP" | jq -r '.disk_pct')
       TS=$(echo   "$SNAP" | jq -r '.timestamp')
-
+      #call check_metric() to compare against threshold
       check_metric "cpu_pct"  "$CPU"  "$CPU_WARN"  "$CPU_CRIT"  "$TS" "$HOST"
       check_metric "mem_pct"  "$MEM"  "$MEM_WARN"  "$MEM_CRIT"  "$TS" "$HOST"
       check_metric "disk_pct" "$DISK" "$DISK_WARN" "$DISK_CRIT" "$TS" "$HOST"

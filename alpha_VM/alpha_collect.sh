@@ -64,7 +64,7 @@ SNAPSHOT=$(jq -n \
 # Writing to `~/data/metrics.json`
 #write to a temporary json since we cant read and write to the same file at the same time
 TMP=$(mktemp)
-#append the snapshot object to the file '.' from METRICS_FILE and store it in temp
+#append the snap object from METRICS_FILE into TMP
 jq --argjson snap "$SNAPSHOT" '. + [$snap]' "$METRICS_FILE" > "$TMP"
 #replace the METRICS_FILE with our temp which has the appended snapshot
 mv "$TMP" "$METRICS_FILE"
