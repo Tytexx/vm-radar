@@ -2,7 +2,6 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="$SCRIPT_DIR/config/settings.json"
-THRESHOLDS="$SCRIPT_DIR/config/thresholds.json"
 
 PEER_HOST=$(jq -r '.peer_hostname' "$CONFIG")
 
