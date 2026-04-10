@@ -1,6 +1,7 @@
  #!/usr/bin/env bash
 
-CONFIG="config/settings.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG="$SCRIPT_DIR/config/settings.json"
 
 PEER_HOST=$(jq -r '.peer_hostname' "$CONFIG")
 
