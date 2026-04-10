@@ -2,12 +2,12 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="$SCRIPT_DIR/config/settings.json"
-METRICS_FILE="$DATA_DIR/metrics.json"
 
 PEER_HOST=$(jq -r '.peer_hostname' "$CONFIG")
 
 DATA_DIR=$(jq -r  '.data_dir' "$CONFIG" | sed "s|~|$HOME|g")
 LOG_DIR=$(jq -r   '.log_dir' "$CONFIG" | sed "s|~|$HOME|g")
+METRICS_FILE="$DATA_DIR/metrics.json"
 
 #if directories do not exist
 mkdir -p "$DATA_DIR"
