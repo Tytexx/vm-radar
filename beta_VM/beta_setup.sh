@@ -59,7 +59,7 @@ mkdir -p "$SCRIPT_DIR/config" #make directory named where we are no after all ab
 cat > "$SCRIPT_DIR/config/settings.json" <<EOF
 {
   "peer_hostname": "alpha-vm",
-  "peer_user": "qustudent",
+  "peer_user": "alpha",
   "ssh_key": "~/.ssh/id_rsa",
   "collect_interval_sec": 60,
   "exchange_interval_sec": 300,
@@ -104,7 +104,7 @@ sudo tee /etc/systemd/system/vm-monitor.service > /dev/null <<EOF
 Description=VM Monitoring Service
 After=network.target
 [Service]
-ExecStart=/home/qustudent/beta_VM/beta_service.sh
+ExecStart=/home/beta/beta_VM/beta_service.sh
 Restart=on-failure
 [Install]
 WantedBy=multi-user.target
