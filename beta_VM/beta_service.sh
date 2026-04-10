@@ -24,7 +24,7 @@ Description=VM Monitoring Service - Beta Collector Daemon
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'while true; do ${SCRIPT_DIR}/beta_collect.sh; sleep ${COLLECT_INTERVAL}; done'
+ExecStart=/bin/bash -c "while true; do ${SCRIPT_DIR}/beta_collect.sh; sleep ${COLLECT_INTERVAL}; done"
 Restart=on-failure
 RestartSec=10
 User=$(whoami)
@@ -52,7 +52,7 @@ EOF
     sleep 2  
     STATE=$(systemctl is-active "$SERVICE_NAME" 2>/dev/null || echo "unknown") #get current service state and if cant then state is unknown
     #systemctl is-active  checks if its active or not then outputs it
-    if ["$STATE" = "active"]; then
+    if [ "$STATE" = "active" ]; then
         echo "Service $SERVICE_NAME started successfully and is active"
     else
         echo "Service not started, $SERVICE_NAME is $STATE"
@@ -91,7 +91,7 @@ EOF
     #to get memory usage
     MEMORY_BYTES=$(systemctl show "$SERVICE_NAME" --property=MemoryCurrent 2>/dev/null | cut -d= -f2) #get mem usage in bytes
     MEMORY_MB="None"
-    if [ "$MEMORY_BYTES" -gt 0 ]; then
+    if [ -n "$MEMORY_BYTES" ] && [ "$MEMORY_BYTES" -gt 0 ]; then #check if bytes isnt empty and >0
         MEMORY_MB=$(awk "BEGIN {printf \"%.1fMB\", $MEMORY_BYTES/1048576}") #bytes to MB 1MB is 1048576 bytes
         #awk is so we can use decimals. cant use float since its bash/bash and .1fMB to 1 dp and MB for units
     fi
