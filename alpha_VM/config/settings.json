@@ -1,6 +1,6 @@
 {
 "peer_hostname": "beta-vm",
-"peer_user": "qustudent",
+"peer_user": "beta",
 "ssh_key": "~/.ssh/id_rsa",
 "collect_interval_sec": 60,
 "exchange_interval_sec": 300,

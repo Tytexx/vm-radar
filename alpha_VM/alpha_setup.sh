@@ -26,7 +26,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" #for the folder path
 PEER_HOST="beta-vm" #the peer is beta this is alpha (from the project file in the example
-PEER_USER="qustudent"
+PEER_USER="beta"
 BETA_GPG_EMAIL="beta@vm-monitor.local"
 GPG_EMAIL="alpha@vm-monitor.local"
 GPG_NAME="alpha-vm-monitor"
@@ -77,7 +77,7 @@ mkdir -p "$SCRIPT_DIR/config" #make directory named where we are no after all ab
 cat > "$SCRIPT_DIR/config/settings.json" <<EOF
 {
   "peer_hostname": "beta-vm",
-  "peer_user": "qustudent",
+  "peer_user": "beta",
   "ssh_key": "$HOME/.ssh/id_rsa",
   "collect_interval_sec": 60,
   "exchange_interval_sec": 300,
