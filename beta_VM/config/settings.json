@@ -1,0 +1,12 @@
+{
+"peer_hostname": "alpha-vm",
+"peer_user": "qustudent",
+"ssh_key": "~/.ssh/id_rsa",
+"collect_interval_sec": 60,
+"exchange_interval_sec": 300,
+"data_dir": "~/data",
+"log_dir": "~/logs",
+"redis_host": "alpha-vm",
+"redis_port": 6379,
+"backup_passphrase_env": "VM_BACKUP_KEY"
+}
