@@ -46,7 +46,7 @@ check_metric() {
     #create ALERT OBJECT
     ALERT=$(jq -n \
       --arg alert_id "$ALERT_ID" \
-      --arg hostname "$HOSTNAME" \
+      --arg hostname "$HOST" \
       --arg metric "$METRIC_NAME" \
       --argjson value "$VALUE" \
       --argjson threshold "$THRESHOLD" \
@@ -59,11 +59,10 @@ check_metric() {
           value: $value,
           threshold: $threshold,
           severity: $severity,
-          timestamp: $timestamp,
+          timestamp: $timestamp
       }')
     
     #add to logs
-    ALERTS_LOG="$LOG_DIR/alerts.log"
     echo "$ALERT" >> "$ALERTS_LOG"
 
     #TODO publish to redis
