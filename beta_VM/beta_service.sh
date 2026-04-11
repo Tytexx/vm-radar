@@ -15,7 +15,8 @@ if [ $# -ne 1 ]; then #if arguments is not 1 then print use one of these after s
 fi
 ACTION="$1" #so it stores install/start/stop etc one of them
 case "$ACTION" in 
-install) #first case
+install)
+ #first case
   echo "Generating a systemd unit file"
   #next is write all this between EOFs to service file
   sudo tee "$SERVICE_FILE" > /dev/null <<EOF
@@ -46,7 +47,8 @@ EOF
     echo "Install complete. Type: $0 start to start"
     ;; #end of case block
 
-  start) #case start
+  start)
+   #case start
     echo "Starting $SERVICE_NAME..."
     sudo systemctl start "$SERVICE_NAME"
     sleep 2  
@@ -59,7 +61,8 @@ EOF
     fi
     ;;  #end service under servicename
 
-  stop) #case stop
+  stop)
+   #case stop
     echo "Stopping $SERVICE_NAME..."
     sudo systemctl stop "$SERVICE_NAME"
     sleep 1
@@ -67,7 +70,8 @@ EOF
     echo "Service $SERVICE_NAME has now stopped"
     ;; #confirm service is over in case
 
-  status) #case status
+  status) 
+  #case status
     echo "Service is: $SERVICE_NAME "
     ACTIVE_STATE=$(systemctl show "$SERVICE_NAME" --property=ActiveState 2>/dev/null | cut -d= -f2) 
     #shows all properties of this service then filters so we only see the active status property. last bit basically delimiter is =(separator)
@@ -101,13 +105,15 @@ EOF
     echo "uptime=$UPTIME"
     echo "memory=$MEMORY_MB"
     ;; #summary of services given
-  logs) #case is logs 
+  logs) 
+  #case is logs 
     echo "Last 20 log entries for $SERVICE_NAME" #show last 20 logs 
     journalctl -u "$SERVICE_NAME" --no-pager -n 20 #show logs for unit(-u) servicename journalctl like ctrl log system to get all of the lofs
     #--no-pager so everything sent to terminal rather in the log where have to interact/type 
     ;; #end case
 
-  *) #case anything else
+  *)
+   #case anything else
     echo "ERROR: Unknown action has been entered: '$ACTION'"
     echo "Use of of: $0 <install|start|stop|status|logs>"
     exit 1

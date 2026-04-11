@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # find where settings.json is
-SETTINGS="$(dirname "$0")/config/settings.json"
+SETTINGS="$HOME/config/settings.json"
 
 # find redis connection details from JSON config
 REDIS_HOST=$(jq -r '.redis_host' "$SETTINGS")
 REDIS_PORT=$(jq -r '.redis_port' "$SETTINGS")
 
-DATA_FILE="~/data/metrics.json"
-PEER_ALERTS_LOG="$(dirname "$0")/logs/peer_alerts.log"
-LOCAL_ALERTS_LOG="$(dirname "$0")/logs/alerts.log"
-THRESHOLDS="$(dirname "$0")/config/thresholds.json"
+DATA_FILE="$HOME/data/metrics.json"
+PEER_ALERTS_LOG="$HOME/logs/peer_alerts.log"
+LOCAL_ALERTS_LOG="$HOME/logs/alerts.log"
+THRESHOLDS="$HOME/config/thresholds.json"
 
 CHANNEL="vm-alerts"
 

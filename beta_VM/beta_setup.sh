@@ -22,6 +22,7 @@ mkdir -p ~/logs/{sent,rejected}
 mkdir -p ~/data
 mkdir -p ~/backup/logs
 
+
 # Data file 
 echo '[]' > ~/data/metrics.json
 
@@ -29,6 +30,12 @@ echo '[]' > ~/data/metrics.json
 touch ~/logs/health.log
 touch ~/logs/alerts.log
 touch ~/logs/exchange.log
+touch ~/logs/peer_alerts.log
+touch ~/logs/log_summary.log
+touch ~/logs/peer_alerts.log
+
+
+
 echo "Files have been created."
 
 echo "Initializing ~/data/metrics.json..." #main file

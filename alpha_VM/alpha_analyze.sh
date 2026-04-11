@@ -65,7 +65,6 @@ check_metric() {
     #add to logs
     echo "$ALERT" >> "$ALERTS_LOG"
 
-    #TODO publish to redis
     #publish to redis and > /dev/null for clean stdoout
     redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" PUBLISH "vm-alerts" "$ALERT" > /dev/null
     #stdout
