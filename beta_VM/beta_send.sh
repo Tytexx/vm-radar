@@ -12,11 +12,11 @@ SSH_KEY="${SSH_KEY/#\~/$HOME}"
 # data file under home
 DATA_FILE="$HOME/beta_VM/data/metrics.json"
 
-LOG_SENT="$(dirname "$0")/logs/sent"
-LOG_REJECTED="$(dirname "$0")/logs/rejected"
-EXCHANGE_LOG="$(dirname "$0")/logs/exchange.log"
-OUTBOX="$(dirname "$0")/exchange/outbox"
-INBOX="$(dirname "$0")/exchange/inbox"
+LOG_SENT="$HOME/logs/sent"
+LOG_REJECTED="$HOME/logs/rejected"
+EXCHANGE_LOG="$HOME/logs/exchange.log"
+OUTBOX="$HOME/exchange/outbox"
+INBOX="$HOME/exchange/inbox"
 
 # These two lines are the only real difference from alpha_send.sh
 # Beta encrypts FOR Alpha, and decrypts AS Beta
@@ -55,7 +55,7 @@ for JSON_FILE in "$OUTBOX"/*.json; do
     scp -i "$SSH_KEY" \
         -o StrictHostKeyChecking=no \
         "$GPG_FILE" \
-        "${PEER_USER}@${PEER_HOST}:/home/${PEER_USER}/alpha_VM/exchange/inbox/"
+        "${PEER_USER}@${PEER_HOST}:~/exchange/inbox/"
 
     if [ $? -ne 0 ]; then
         echo "ERROR: SCP failed for $FILENAME"
