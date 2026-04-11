@@ -16,7 +16,7 @@ CHANNEL="vm-alerts"
 
 # analyze the local metrics and trigger alerts
 run_local_analysis() {
-    # Load threshold values from threshold.json
+
     CPU_WARN=$(jq -r '.cpu_warn'  "$THRESHOLDS")
     CPU_CRIT=$(jq -r '.cpu_crit'  "$THRESHOLDS")
     MEM_WARN=$(jq -r '.mem_warn'  "$THRESHOLDS")
@@ -24,37 +24,39 @@ run_local_analysis() {
     DISK_WARN=$(jq -r '.disk_warn' "$THRESHOLDS")
     DISK_CRIT=$(jq -r '.disk_crit' "$THRESHOLDS")
 
-    # Exit if metrics file doesn't exist
-    if [ ! -f "$DATA_FILE" ]; then
-        return
-    fi
-    # Count entries in metrics file
-    ENTRY_COUNT=$(jq 'length' "$DATA_FILE" 2>/dev/null)
-    if [ -z "$ENTRY_COUNT" ] || [ "$ENTRY_COUNT" -eq 0 ]; then
-        return
-    fi
-    # Get list of hostnames from metrics
-    HOSTNAMES=$(jq -r '.[].hostname' "$DATA_FILE" 2>/dev/null | sort -u)
-    # Current time for alerts
-    TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    
-    # Process each host separately
-    while IFS= read -r HOSTNAME; do
+    echo "DEBUG: DATA_FILE=$DATA_FILE"
+    echo "DEBUG: CPU_WARN=$CPU_WARN CPU_CRIT=$CPU_CRIT"
 
-        # Get latest metric entry for this host
+    if [ ! -f "$DATA_FILE" ]; then
+        echo "DEBUG: metrics file not found — exiting"
+        return
+    fi
+
+    ENTRY_COUNT=$(jq 'length' "$DATA_FILE" 2>/dev/null)
+    echo "DEBUG: ENTRY_COUNT=$ENTRY_COUNT"
+
+    if [ -z "$ENTRY_COUNT" ] || [ "$ENTRY_COUNT" -eq 0 ]; then
+        echo "DEBUG: metrics file empty — exiting"
+        return
+    fi
+
+    HOSTNAMES=$(jq -r '.[].hostname' "$DATA_FILE" 2>/dev/null | sort -u)
+    echo "DEBUG: HOSTNAMES=$HOSTNAMES"
+
+    TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+    while IFS= read -r HOSTNAME; do
         SNAPSHOT=$(jq -r --arg h "$HOSTNAME" \
             '[.[] | select(.hostname == $h)] | last' \
             "$DATA_FILE" 2>/dev/null)
-        # skip if no is data found
-        [ -z "$SNAPSHOT" ] && continue
 
-        # Extract metrics (put 0 if missing)
+        echo "DEBUG: SNAPSHOT=$SNAPSHOT"
+
         CPU=$(echo  "$SNAPSHOT" | jq -r '.cpu_pct  // 0')
         MEM=$(echo  "$SNAPSHOT" | jq -r '.mem_pct  // 0')
         DISK=$(echo "$SNAPSHOT" | jq -r '.disk_pct // 0')
 
-        # compare metrics against thresholds
-        # bc is used because bash can't handle floating-point comparison
+        echo "DEBUG: CPU=$CPU MEM=$MEM DISK=$DISK"
 
         # cpu checks
         if [ "$(echo "$CPU > $CPU_CRIT" | bc -l)" = "1" ]; then
@@ -63,14 +65,12 @@ run_local_analysis() {
             publish_local_alert "$HOSTNAME" "cpu_pct" "$CPU" "$CPU_WARN" "WARNING" "$TIMESTAMP"
         fi
 
-        # memory checks
         if [ "$(echo "$MEM > $MEM_CRIT" | bc -l)" = "1" ]; then
             publish_local_alert "$HOSTNAME" "mem_pct" "$MEM" "$MEM_CRIT" "CRITICAL" "$TIMESTAMP"
         elif [ "$(echo "$MEM > $MEM_WARN" | bc -l)" = "1" ]; then
             publish_local_alert "$HOSTNAME" "mem_pct" "$MEM" "$MEM_WARN" "WARNING" "$TIMESTAMP"
         fi
 
-        # disk checks
         if [ "$(echo "$DISK > $DISK_CRIT" | bc -l)" = "1" ]; then
             publish_local_alert "$HOSTNAME" "disk_pct" "$DISK" "$DISK_CRIT" "CRITICAL" "$TIMESTAMP"
         elif [ "$(echo "$DISK > $DISK_WARN" | bc -l)" = "1" ]; then
@@ -161,6 +161,7 @@ while true; do
     done
 
     # print when Redis is disconnected
+    echo "Reached here"
     echo "WARNING: Redis connection lost. Retrying in ${RETRY_DELAY}s..."
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) Redis connection lost, retry in ${RETRY_DELAY}s" >> "$PEER_ALERTS_LOG"
 

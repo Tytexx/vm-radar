@@ -1,10 +1,10 @@
-bash#!/bin/bash
+#!/bin/bash
 
 # find where script is located
 SCRIPT_DIR="$(dirname "$0")"
 
 # define the paths
-LOG_DIR="$HOME/beta_VM/logs"
+LOG_DIR="$HOME/logs"
 BINARY="$SCRIPT_DIR/log_report"
 SOURCE="$SCRIPT_DIR/log_report.c"
 SUMMARY_LOG="$LOG_DIR/log_summary.log"
