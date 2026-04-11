@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # jq reads JSON files - Please change the variables to actual names when executing
 SETTINGS="$(dirname "$0")/config/settings.json" #Load config files
 
@@ -8,17 +7,17 @@ PEER_HOST=$(jq -r '.peer_hostname' "$SETTINGS")   #beta-vm
 PEER_USER=$(jq -r '.peer_user' "$SETTINGS")        #qustudent
 SSH_KEY=$(jq -r '.ssh_key' "$SETTINGS")            #~/.ssh/id_rsa
 DATA_FILE=$(jq -r '.data_dir' "$SETTINGS")/metrics.json
-LOG_SENT="$(dirname "$0")/logs/sent"
-LOG_REJECTED="$(dirname "$0")/logs/rejected"
-OUTBOX="$(dirname "$0")/exchange/outbox"
-INBOX="$(dirname "$0")/exchange/inbox"
+LOG_SENT="$HOME/logs/sent"
+LOG_REJECTED="$HOME/logs/rejected"
+OUTBOX="$HOME/exchange/outbox"
+INBOX="$HOME/exchange/inbox"
 
 SSH_KEY="${SSH_KEY/#\~/$HOME}"
 DATA_FILE="${DATA_FILE/#\~/$HOME}"
 
 # gpg identities
-PEER_EMAIL="beta@vm.local" 
-MY_EMAIL="alpha@vm.local"  
+PEER_EMAIL="beta@vm.local"
+MY_EMAIL="alpha@vm.local"
 
 #Counters - used for log summary
 SENT_COUNT=0
@@ -38,7 +37,7 @@ for JSON_FILE in "$OUTBOX"/*.json; do
 
     echo "Encrypting $FILENAME..."
 
-# Encryption of the file using peer's public key
+    # Encryption of the file using peer's public key
     gpg --recipient "$PEER_EMAIL" \
         --trust-model always \
         --encrypt \
@@ -50,11 +49,11 @@ for JSON_FILE in "$OUTBOX"/*.json; do
         continue
     fi
 
-# Encryption of the file using peer's public key
+    # SCP encrypted file to peer
     scp -i "$SSH_KEY" \
         -o StrictHostKeyChecking=no \
         "$GPG_FILE" \
-        "${PEER_USER}@${PEER_HOST}:~/exchange/inbox/"
+        "${PEER_USER}@${PEER_HOST}:~/exchange/inbox/"   
 
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to SCP $FILENAME to $PEER_HOST"
@@ -70,24 +69,24 @@ for JSON_FILE in "$OUTBOX"/*.json; do
     echo "Sent $FILENAME to $PEER_HOST"
 done
 
-# RECIEVING MECHANISM
+# RECEIVING MECHANISM
 for GPG_FILE in "$INBOX"/*.json.gpg; do
 
     [ -f "$GPG_FILE" ] || continue
 
     FILENAME=$(basename "$GPG_FILE")
-    DECRYPTED_FILE="${GPG_FILE%.gpg}"   
+    DECRYPTED_FILE="${GPG_FILE%.gpg}"
 
     echo "Decrypting $FILENAME..."
 
-#Decrypt using Alpha's private key
+    # Decrypt using Alpha's private key
     gpg --decrypt \
         --output "$DECRYPTED_FILE" \
-        "$GPG_FILE" 2>/dev/null   
+        "$GPG_FILE" 2>/dev/null
 
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to decrypt $FILENAME"
-        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) REJECTED $FILENAME" >> "$(dirname "$0")/logs/exchange.log"
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) REJECTED $FILENAME" >> "$HOME/logs/exchange.log"
 
         mv "$GPG_FILE" "$LOG_REJECTED/$FILENAME"
 
@@ -95,7 +94,7 @@ for GPG_FILE in "$INBOX"/*.json.gpg; do
         continue
     fi
 
-#Check if decrypted file is JSON format 
+    # Check if decrypted file is valid JSON
     if ! jq empty "$DECRYPTED_FILE" 2>/dev/null; then
         echo "ERROR: Decrypted file is not valid JSON: $FILENAME"
         mv "$GPG_FILE" "$LOG_REJECTED/$FILENAME"
@@ -117,4 +116,4 @@ done
 # Update logs
 echo "SENT $SENT_COUNT files to $PEER_HOST | RECEIVED $((VALID_COUNT + REJECTED_COUNT)) files (valid=$VALID_COUNT rejected=$REJECTED_COUNT)"
 
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) SENT=$SENT_COUNT RECEIVED=$VALID_COUNT REJECTED=$REJECTED_COUNT" >> "$(dirname "$0")/logs/exchange.log"
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) SENT=$SENT_COUNT RECEIVED=$VALID_COUNT REJECTED=$REJECTED_COUNT" >> "$HOME/logs/exchange.log"

@@ -4,7 +4,7 @@ SETTINGS="$(dirname "$0")/config/settings.json"
 REDIS_HOST=$(jq -r '.redis_host' "$SETTINGS")
 REDIS_PORT=$(jq -r '.redis_port' "$SETTINGS")
 
-DATA_FILE="$HOME/beta_VM/data/metrics.json"
+DATA_FILE="~/data/metrics.json"
 PEER_ALERTS_LOG="$(dirname "$0")/logs/peer_alerts.log"
 LOCAL_ALERTS_LOG="$(dirname "$0")/logs/alerts.log"
 THRESHOLDS="$(dirname "$0")/config/thresholds.json"
