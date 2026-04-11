@@ -16,6 +16,20 @@ mkdir -p ~/logs/rejected
 mkdir -p ~/backup/logs
 echo "Directories have been created."
 
+
+mkdir -p ~/exchange/{inbox,outbox}
+mkdir -p ~/logs/{sent,rejected}
+mkdir -p ~/data
+mkdir -p ~/backup/logs
+
+# Data file 
+echo '[]' > ~/data/metrics.json
+
+# initialize log files
+touch ~/logs/health.log
+touch ~/logs/alerts.log
+touch ~/logs/exchange.log
+
 echo "Initializing ~/data/metrics.json..." #main file
 if [ ! -f ~/data/metrics.json ]; then #if it doesnt exist then make it else its alr there
     echo '[]' > ~/data/metrics.json #initialized as an empty JSON array

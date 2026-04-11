@@ -16,7 +16,7 @@ SSH_KEY=$(jq -r '.ssh_key' "$SETTINGS")
 PEER_USER=$(jq -r '.peer_user' "$SETTINGS")
 SSH_KEY="${SSH_KEY/#\~/$HOME}"
 
-LOG_FILE="$(dirname "$0")/logs/health.log"
+LOG_FILE="$HOME/logs/health.log"
 
 # UTC timestamp in ISO 8601 format — matches the format used in metrics.json
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
