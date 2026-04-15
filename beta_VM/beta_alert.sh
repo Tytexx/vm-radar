@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # find where settings.json is
-SETTINGS="$HOME/config/settings.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SETTINGS="$SCRIPT_DIR/config/settings.json"
 
 # find redis connection details from JSON config
 REDIS_HOST=$(jq -r '.redis_host' "$SETTINGS")
@@ -10,7 +11,7 @@ REDIS_PORT=$(jq -r '.redis_port' "$SETTINGS")
 DATA_FILE="$HOME/data/metrics.json"
 PEER_ALERTS_LOG="$HOME/logs/peer_alerts.log"
 LOCAL_ALERTS_LOG="$HOME/logs/alerts.log"
-THRESHOLDS="$HOME/config/thresholds.json"
+THRESHOLDS="$SCRIPT_DIR/config/thresholds.json"
 
 CHANNEL="vm-alerts"
 
@@ -24,25 +25,18 @@ run_local_analysis() {
     DISK_WARN=$(jq -r '.disk_warn' "$THRESHOLDS")
     DISK_CRIT=$(jq -r '.disk_crit' "$THRESHOLDS")
 
-    echo "DEBUG: DATA_FILE=$DATA_FILE"
-    echo "DEBUG: CPU_WARN=$CPU_WARN CPU_CRIT=$CPU_CRIT"
 
     if [ ! -f "$DATA_FILE" ]; then
-        echo "DEBUG: metrics file not found — exiting"
         return
     fi
 
     ENTRY_COUNT=$(jq 'length' "$DATA_FILE" 2>/dev/null)
-    echo "DEBUG: ENTRY_COUNT=$ENTRY_COUNT"
 
     if [ -z "$ENTRY_COUNT" ] || [ "$ENTRY_COUNT" -eq 0 ]; then
-        echo "DEBUG: metrics file empty — exiting"
         return
     fi
 
     HOSTNAMES=$(jq -r '.[].hostname' "$DATA_FILE" 2>/dev/null | sort -u)
-    echo "DEBUG: HOSTNAMES=$HOSTNAMES"
-
     TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
     while IFS= read -r HOSTNAME; do
@@ -50,13 +44,9 @@ run_local_analysis() {
             '[.[] | select(.hostname == $h)] | last' \
             "$DATA_FILE" 2>/dev/null)
 
-        echo "DEBUG: SNAPSHOT=$SNAPSHOT"
-
         CPU=$(echo  "$SNAPSHOT" | jq -r '.cpu_pct  // 0')
         MEM=$(echo  "$SNAPSHOT" | jq -r '.mem_pct  // 0')
         DISK=$(echo "$SNAPSHOT" | jq -r '.disk_pct // 0')
-
-        echo "DEBUG: CPU=$CPU MEM=$MEM DISK=$DISK"
 
         # cpu checks
         if [ "$(echo "$CPU > $CPU_CRIT" | bc -l)" = "1" ]; then
