@@ -47,8 +47,8 @@ else
 fi
 
 echo "Setting up GPG key pair..."
-GPG_NAME="beta-vm-monitor"
-GPG_EMAIL="beta@vm-monitor.local"
+GPG_NAME="beta-vm"
+GPG_EMAIL="beta@vm.local"
 if gpg --list-keys "$GPG_EMAIL" &>/dev/null; then # means &> its run silently and only checks if it exists
     echo "GPG key already exists for $GPG_EMAIL, skipping generation."
 else 
