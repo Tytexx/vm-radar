@@ -73,6 +73,18 @@ gpg --armor --export "$GPG_EMAIL" > ~/beta_pubkey.gpg #armor for readable text -
 echo "Public key has been sent to ~/beta_pubkey.gpg"
 #need to manually put ~/beta_pubkey.gpg into alpha then run  gpg --import ~/beta_pubkey.gpg
 
+echo "Fetching Alpha public key..."
+PEER_HOST="alpha-vm"
+PEER_USER="alpha"
+
+# download alpha public key from Alpha VM
+scp -i ~/.ssh/id_rsa "$PEER_USER@$PEER_HOST:~/alpha_pubkey.gpg" ~/alpha_pubkey.gpg
+
+# import Alpha key into GPG
+gpg --import ~/alpha_pubkey.gpg
+
+echo "Alpha public key imported successfully."
+
 echo "Creating config/settings.json..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" #BASHSOURCE for current path then dirname to remove file name
 #scriptdir is basically the current VM directory
