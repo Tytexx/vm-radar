@@ -41,9 +41,9 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" #for the folder path
 PEER_HOST="beta-vm" #the peer is beta this is alpha (from the project file in the example
 PEER_USER="beta"
-BETA_GPG_EMAIL="beta@vm-monitor.local"
-GPG_EMAIL="alpha@vm-monitor.local"
-GPG_NAME="alpha-vm-monitor"
+BETA_GPG_EMAIL="beta@vm.local"
+GPG_EMAIL="alpha@vm.local"
+GPG_NAME="alpha-vm"
 #SSH key autnetication ->
 if [ ! -f ~/.ssh/id_rsa ]; then #if id_rsa file doesnt exit then make the key pair->
     ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N "" #""for no password
