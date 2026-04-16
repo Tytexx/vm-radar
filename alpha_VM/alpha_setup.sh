@@ -119,7 +119,28 @@ EOF
 #created the file and write the json into it with all the warnings
 echo "config/thresholds.json successfully made."
 #thresholds.json basically just stores akll the warnings and criticals if vale if % is >= the value
+echo "Ensuring host name resolution for local and peer hostnames..."
+PEER_HOSTNAME=$(jq -r '.peer_hostname' "$SCRIPT_DIR/config/settings.json" 2>/dev/null || echo "beta-vm")
+LOCAL_HOSTNAME=$(hostname -s)
+SELF_IP="${VM_ALPHA_IP:-${VM_LOCAL_IP:-$(hostname -I | awk '{print $1}')}}"
+PEER_IP="${VM_PEER_IP:-${VM_BETA_IP:-}}"
 
+if [ -n "$SELF_IP" ] && ! grep -qE "^[^#]*\b$LOCAL_HOSTNAME\b" /etc/hosts; then
+    echo "Adding $SELF_IP $LOCAL_HOSTNAME to /etc/hosts"
+    echo "$SELF_IP $LOCAL_HOSTNAME" | sudo tee -a /etc/hosts >/dev/null
+fi
+
+if [ -n "$PEER_IP" ] && [ -n "$PEER_HOSTNAME" ] && ! grep -qE "^[^#]*\b$PEER_HOSTNAME\b" /etc/hosts; then
+    echo "Adding $PEER_IP $PEER_HOSTNAME to /etc/hosts"
+    echo "$PEER_IP $PEER_HOSTNAME" | sudo tee -a /etc/hosts >/dev/null
+fi
+
+if [ -z "$SELF_IP" ]; then
+    echo "WARNING: Could not determine local IP address; local host entry was not added."
+fi
+if [ -z "$PEER_IP" ]; then
+    echo "WARNING: Set VM_PEER_IP or VM_BETA_IP environment variable before running this script to add the peer host entry automatically."
+fi
 echo "Setting permissions for all shell scripts"
 find "$SCRIPT_DIR" -name "*.sh" -exec chmod +x {} \; #searches everything in SCRIPT_DR for everything ending with .sh
 #so it looks for all shell files than adds the execute permission 
