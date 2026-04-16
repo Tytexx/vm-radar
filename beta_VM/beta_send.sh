@@ -10,7 +10,7 @@ SSH_KEY=$(jq -r '.ssh_key' "$SETTINGS")
 SSH_KEY="${SSH_KEY/#\~/$HOME}"
 
 # data file under home
-DATA_FILE="$HOME/beta_VM/data/metrics.json"
+DATA_FILE="$HOME/data/metrics.json"
 
 LOG_SENT="$HOME/logs/sent"
 LOG_REJECTED="$HOME/logs/rejected"
