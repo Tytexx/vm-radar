@@ -58,7 +58,7 @@ SVC_REDIS="unknown"
 if [ "$SSH_RESULT" = "OPEN" ]; then
 #private key to connect, connection timeout, disable password prompting, and the template for the login
     SVC_OUTPUT=$(ssh -i "$SSH_KEY" \
-        -o StrictHostKeyChecking=no \ 
+        -o StrictHostKeyChecking=no \
         -o ConnectTimeout=5 \
         -o BatchMode=yes \
         "${PEER_USER}@${TARGET}" \
