@@ -63,6 +63,11 @@ echo "(You will be prompted for $PEER_HOST password once — never again after t
 ssh-copy-id -i ~/.ssh/id_rsa.pub "$PEER_USER@$PEER_HOST"
 #take the public key and install it then use -i public key file and put it into user@host
 
+# make it so keys are only checked locally, and searching on online servers is blocked
+mkdir -p ~/.gnupg
+echo "auto-key-locate local" >> ~/.gnupg/gpg.conf
+chmod 700 ~/.gnupg
+
 # GPG key pair generation
 echo "Setting up GPG key pair..."
 if gpg --list-keys "$GPG_EMAIL" &>/dev/null; then # means &> its run silently and only checks if it exists
