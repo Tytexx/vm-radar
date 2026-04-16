@@ -1,8 +1,9 @@
 #!/bin/bash
 
-#take values from config
-CONFIG="config/settings.json"
-THRESHOLDS="config/thresholds.json"
+#take values from 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG="$SCRIPT_DIR/config/settings.json"
+THRESHOLDS="$SCRIPT_DIR/config/thresholds.json"
 
 INTERVAL=$(jq -r '.collect_interval_sec' "$CONFIG")
 REDIS_HOST=$(jq -r '.redis_host' "$CONFIG")
