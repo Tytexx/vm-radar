@@ -2,6 +2,7 @@
 *.log
 metrics.json
 /backup/
+.github/
 
 #MacOS
 .DS_Store

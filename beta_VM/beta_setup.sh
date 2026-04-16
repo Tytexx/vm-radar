@@ -1,10 +1,16 @@
 #!/bin/bash
 echo "VM is being set up..."
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SETTINGS_FILE="$SCRIPT_DIR/config/settings.json"
+
 echo "Installing packages..."
 sudo apt-get update -qq
-sudo apt-get install -y redis-tools jq gnupg #jq is editor for JSON files. redis-tools. Beta doesnt need all redis stuff so just connects to Alpha for the one thing it needs
-#gnupg for encryption
+sudo apt-get install -y redis-tools redis-server jq gnupg # jq for JSON files; redis-tools + redis-server for beta Redis support
+# gnupg for encryption
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+sudo systemctl status redis-server --no-pager || true
 echo "Packages have been installed."
 
 echo "Creating directory layout..."
@@ -73,23 +79,34 @@ gpg --armor --export "$GPG_EMAIL" > ~/beta_pubkey.gpg #armor for readable text -
 echo "Public key has been sent to ~/beta_pubkey.gpg"
 #need to manually put ~/beta_pubkey.gpg into alpha then run  gpg --import ~/beta_pubkey.gpg
 
-echo "Fetching Alpha public key..."
-PEER_HOST="alpha-vm"
-PEER_USER="alpha"
+echo "Fetching peer public key..."
+if [ -f "$SETTINGS_FILE" ]; then
+    PEER_HOST=$(jq -r '.peer_hostname' "$SETTINGS_FILE")
+    PEER_USER=$(jq -r '.peer_user' "$SETTINGS_FILE")
+fi
+PEER_HOST=${PEER_HOST:-alpha-vm}
+PEER_USER=${PEER_USER:-alpha}
 
-# download alpha public key from Alpha VM
+if [ -z "$PEER_HOST" ] || [ "$PEER_HOST" = "null" ]; then
+    echo "ERROR: peer_hostname is missing from $SETTINGS_FILE and no fallback is available"
+    exit 1
+fi
+
+if [ -z "$PEER_USER" ] || [ "$PEER_USER" = "null" ]; then
+    echo "ERROR: peer_user is missing from $SETTINGS_FILE and no fallback is available"
+    exit 1
+fi
+
+# download peer public key from the configured peer hostname
 scp -i ~/.ssh/id_rsa "$PEER_USER@$PEER_HOST:~/alpha_pubkey.gpg" ~/alpha_pubkey.gpg
 
-# import Alpha key into GPG
+# import peer public key into GPG
 gpg --import ~/alpha_pubkey.gpg
 
-echo "Alpha public key imported successfully."
+echo "Peer public key imported successfully."
 
 echo "Creating config/settings.json..."
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" #BASHSOURCE for current path then dirname to remove file name
-#scriptdir is basically the current VM directory
-#/.. to go to parent (=1 directory backwards) then pwd to get the full path of where we now are(via using cd)
-mkdir -p "$SCRIPT_DIR/config" #make directory named where we are no after all above
+mkdir -p "$SCRIPT_DIR/config"
 cat > "$SCRIPT_DIR/config/settings.json" <<EOF
 {
   "peer_hostname": "alpha-vm",
@@ -120,7 +137,35 @@ cat > "$SCRIPT_DIR/config/thresholds.json" <<EOF
 EOF
 #created the file and write the json into it with all the warnings
 echo "config/thresholds.json successfully made."
-#thresholds.json basically just stores akll the warnings and criticals if vale if % is >= the value
+#thresholds.json basically just stores all the warning and critical thresholds
+
+echo "Ensuring host name resolution for peer hostname..."
+SETTINGS_FILE="$SCRIPT_DIR/config/settings.json"
+PEER_HOSTNAME=$(jq -r '.peer_hostname' "$SETTINGS_FILE")
+LOCAL_HOSTNAME=$(hostname)
+PEER_IP="${VM_PEER_IP:-${VM_ALPHA_IP:-}}"
+LOCAL_IP="${VM_LOCAL_IP:-${VM_BETA_IP:-$(hostname -I | awk '{print $1}')}}"
+
+if [ -z "$PEER_HOSTNAME" ] || [ "$PEER_HOSTNAME" = "null" ]; then
+    echo "WARNING: Could not read peer_hostname from $SETTINGS_FILE; host entries will not be added."
+else
+    if [ -n "$PEER_IP" ] && ! grep -qE "^[^#]*\b$PEER_HOSTNAME\b" /etc/hosts; then
+        echo "Adding $PEER_IP $PEER_HOSTNAME to /etc/hosts"
+        echo "$PEER_IP $PEER_HOSTNAME" | sudo tee -a /etc/hosts >/dev/null
+    fi
+fi
+
+if [ -n "$LOCAL_IP" ] && ! grep -qE "^[^#]*\b$LOCAL_HOSTNAME\b" /etc/hosts; then
+    echo "Adding $LOCAL_IP $LOCAL_HOSTNAME to /etc/hosts"
+    echo "$LOCAL_IP $LOCAL_HOSTNAME" | sudo tee -a /etc/hosts >/dev/null
+fi
+
+if [ -z "$PEER_IP" ]; then
+    echo "WARNING: Set VM_PEER_IP or VM_ALPHA_IP environment variable before running this script to add the peer host entry automatically."
+fi
+if [ -z "$LOCAL_IP" ]; then
+    echo "WARNING: Could not determine local IP address; local host entry was not added."
+fi
 
 echo "Setting permissions for all shell scripts"
 find "$SCRIPT_DIR" -name "*.sh" -exec chmod +x {} \; #searches everything in SCRIPT_DR for everything ending with .sh
@@ -161,4 +206,19 @@ if [ "$PING_RESULT" = "PONG" ]; then
     echo "Redis on $ALPHA_HOST:$REDIS_PORT is reachable. (PONG)"
 else
     echo "Cannot reach Redis at $ALPHA_HOST:$REDIS_PORT"
+    if [ -f /etc/redis/redis.conf ]; then
+        SELF_IP=$(hostname -I | awk '{print $1}')
+        if [ -n "$SELF_IP" ]; then
+            echo "Updating Redis configuration to bind on 127.0.0.1 and local IP $SELF_IP"
+            if grep -qE '^\s*bind\s+' /etc/redis/redis.conf; then
+                sudo sed -i.bak -E "s#^\s*bind\s+.*#bind 127.0.0.1 $SELF_IP#" /etc/redis/redis.conf
+            else
+                echo "bind 127.0.0.1 $SELF_IP" | sudo tee -a /etc/redis/redis.conf >/dev/null
+            fi
+            sudo systemctl restart redis-server
+            echo "Redis server restarted with updated bind configuration."
+        else
+            echo "Could not determine local IP address to update Redis bind settings."
+        fi
+    fi
 fi
