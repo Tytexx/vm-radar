@@ -29,8 +29,11 @@ DELETED_COUNT=0
 
 echo "Creating compressed archive"
 ARCHIVE_TARGETS=() #empty array
-[ -f "$DATA_DIR/metrics.json" ] && ARCHIVE_TARGETS+=("$DATA_DIR/metrics.json")#&& is the same as if true for this so conditionally adding to array
-[ -d "$LOG_DIR" ] && ARCHIVE_TARGETS+=("$LOG_DIR")#ie here if logdir is a directory then add it to archive targets array
+[ -f "$DATA_DIR/metrics.json" ] && ARCHIVE_TARGETS+=("$DATA_DIR/metrics.json")
+
+#&& is the same as if true for this so conditionally adding to array
+[ -d "$LOG_DIR" ] && ARCHIVE_TARGETS+=("$LOG_DIR")
+#ie here if logdir is a directory then add it to archive targets array
 [ -d "$INBOX_DIR" ] && ARCHIVE_TARGETS+=("$INBOX_DIR")
  
 if [ ${#ARCHIVE_TARGETS[@]} -eq 0 ]; then #if empty by taking number of elements # is count @ is all elements within array
