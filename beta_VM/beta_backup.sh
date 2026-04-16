@@ -47,17 +47,25 @@ else
 fi
 
 echo "Encrypting archive with GPG"
-if [ -f "$TEMP_ARCHIVE" ]; then #only tries encryption if there even is a file
-    echo "$PASSPHRASE" | gpg \ 
-    #gpg takes password using stdin
-        --symmetric \ #pass based encryp
-        --batch \ #no inputs needed
-        --passphrase-fd 0 \ #read the passphrase from stdin
-        --output "$BACKUP_PATH" \ #where encrypted files sent
+#pass based encryp
+#no inputs needed
+#read the passphrase from stdin
+#where encrypted files sent
+#only tries encryption if there even is a file
+#gpg takes password using stdin
+
+if [ -f "$TEMP_ARCHIVE" ]; then
+    echo "$PASSPHRASE" | gpg \
+        --symmetric \
+        --batch \
+        --passphrase-fd 0 \
+        --output "$BACKUP_PATH" \
         "$TEMP_ARCHIVE"
-    rm -f "$TEMP_ARCHIVE" #remove the unencrypted file after encryption
-    ENCRYPTED_SIZE=$(du -sh "$BACKUP_PATH" 2>/dev/null | cut -f1) #same as before=get archive size(du-sh), hide errors and then split into fields and take first field (size)
-   #du is disk usage 
+    rm -f "$TEMP_ARCHIVE" 
+    #remove the unencrypted file after encryption
+    ENCRYPTED_SIZE=$(du -sh "$BACKUP_PATH" 2>/dev/null | cut -f1) 
+    #same as before=get archive size(du-sh), hide errors and then split into fields and take first field (size)
+    #du is disk usage 
     echo "BACKUP created $BACKUP_PATH (size=${ENCRYPTED_SIZE})"
 else
     echo "Skipping encryption since no archive was created)."
